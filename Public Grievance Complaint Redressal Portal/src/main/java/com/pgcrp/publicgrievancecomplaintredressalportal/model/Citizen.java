@@ -1,21 +1,20 @@
 package com.pgcrp.publicgrievancecomplaintredressalportal.model;
 
-public class Citizen {
+public class Citizen extends User {
 
     private String citizenId;
-    private String name;
-    private String email;
     private String phoneNumber;
     private String address;
 
     public Citizen() {
+        super();
+        this.role = "CITIZEN";
     }
 
     public Citizen(String citizenId, String name, String email,
                    String phoneNumber, String address) {
+        super(name, email, "CITIZEN");
         this.citizenId = citizenId;
-        this.name = name;
-        this.email = email;
         this.phoneNumber = phoneNumber;
         this.address = address;
     }
@@ -26,22 +25,6 @@ public class Citizen {
 
     public void setCitizenId(String citizenId) {
         this.citizenId = citizenId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     }
 
     public String getPhoneNumber() {
@@ -61,6 +44,11 @@ public class Citizen {
     }
 
     @Override
+    public void displayResponsibilities() {
+        System.out.println("Can file and track complaints.");
+    }
+
+    @Override
     public String toString() {
         return "Citizen{" +
                 "citizenId='" + citizenId + '\'' +
@@ -70,4 +58,5 @@ public class Citizen {
                 ", address='" + address + '\'' +
                 '}';
     }
+
 }
