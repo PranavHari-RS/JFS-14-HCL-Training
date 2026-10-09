@@ -1,6 +1,7 @@
 package com.pgcrp.publicgrievancecomplaintredressalportal.model;
+import com.pgcrp.publicgrievancecomplaintredressalportal.common.BaseEntity;
 
-public class Complaint {
+public class Complaint extends BaseEntity{
 
     private String complaintId;
     private String citizenId;

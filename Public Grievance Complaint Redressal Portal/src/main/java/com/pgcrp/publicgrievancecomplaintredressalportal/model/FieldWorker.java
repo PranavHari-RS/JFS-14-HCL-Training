@@ -1,23 +1,26 @@
 package com.pgcrp.publicgrievancecomplaintredressalportal.model;
 
-public class FieldWorker {
+public class FieldWorker extends User {
 
     private String workerId;
-    private String name;
     private String department;
     private String phoneNumber;
     private boolean available;
+    private int activeComplaintCount;
 
     public FieldWorker() {
+        super();
+        this.role = "FIELD_WORKER";
     }
 
     public FieldWorker(String workerId, String name, String department,
                        String phoneNumber, boolean available) {
+        super(name, null, "FIELD_WORKER");
         this.workerId = workerId;
-        this.name = name;
         this.department = department;
         this.phoneNumber = phoneNumber;
         this.available = available;
+        this.activeComplaintCount = 0;
     }
 
     public String getWorkerId() {
@@ -26,14 +29,6 @@ public class FieldWorker {
 
     public void setWorkerId(String workerId) {
         this.workerId = workerId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getDepartment() {
@@ -60,6 +55,19 @@ public class FieldWorker {
         this.available = available;
     }
 
+    public int getActiveComplaintCount() {
+        return activeComplaintCount;
+    }
+
+    public void setActiveComplaintCount(int activeComplaintCount) {
+        this.activeComplaintCount = activeComplaintCount;
+    }
+
+    @Override
+    public void displayResponsibilities() {
+        System.out.println("Can handle and resolve assigned complaints.");
+    }
+
     @Override
     public String toString() {
         return "FieldWorker{" +
@@ -68,6 +76,8 @@ public class FieldWorker {
                 ", department='" + department + '\'' +
                 ", phoneNumber='" + phoneNumber + '\'' +
                 ", available=" + available +
+                ", activeComplaintCount=" + activeComplaintCount +
                 '}';
     }
+
 }
