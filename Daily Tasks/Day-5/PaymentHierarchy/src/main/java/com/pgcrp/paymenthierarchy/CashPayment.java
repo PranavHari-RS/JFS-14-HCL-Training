@@ -10,5 +10,5 @@ public class CashPayment extends Payment {
     public void pay() {
         System.out.println("Paid Rs. " + amount + " using Cash.");
     }
-
+// Rebase practice change
 }
