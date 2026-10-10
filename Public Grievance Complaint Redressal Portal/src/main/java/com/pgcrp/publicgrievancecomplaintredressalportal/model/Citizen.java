@@ -6,9 +6,12 @@ public class Citizen extends User {
     private String phoneNumber;
     private String address;
 
-    public Citizen() {
+    /*public Citizen() {
         super();
         this.role = "CITIZEN";
+    }*/
+    public Citizen(String name, String email) {
+        super(name, email, "CITIZEN");
     }
 
     public Citizen(String citizenId, String name, String email,

@@ -8,9 +8,12 @@ public class FieldWorker extends User {
     private boolean available;
     private int activeComplaintCount;
 
-    public FieldWorker() {
+    /*public FieldWorker() {
         super();
         this.role = "FIELD_WORKER";
+    }*/
+    public FieldWorker(String name, String email) {
+        super(name, email, "FIELD_WORKER");
     }
 
     public FieldWorker(String workerId, String name, String department,

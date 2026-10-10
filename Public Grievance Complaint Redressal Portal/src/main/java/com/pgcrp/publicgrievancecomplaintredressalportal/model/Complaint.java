@@ -1,5 +1,6 @@
 package com.pgcrp.publicgrievancecomplaintredressalportal.model;
 import com.pgcrp.publicgrievancecomplaintredressalportal.common.BaseEntity;
+import com.pgcrp.publicgrievancecomplaintredressalportal.exception.InvalidComplaintException;
 
 public class Complaint extends BaseEntity{
 
@@ -111,6 +112,15 @@ public class Complaint extends BaseEntity{
 
     public void setRating(int rating) {
         this.rating = rating;
+    }
+
+
+    public static void validateDescription(String description) {
+        if (description == null || description.isBlank()) {
+            throw new InvalidComplaintException(
+                    "Complaint description cannot be empty."
+            );
+        }
     }
 
     @Override

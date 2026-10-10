@@ -2,10 +2,10 @@ package com.pgcrp.publicgrievancecomplaintredressalportal.model;
 
 public class Admin extends User {
 
-    public Admin() {
+    /*public Admin() {
         super();
         this.role = "ADMIN";
-    }
+    }*/
 
     public Admin(String name, String email) {
         super(name, email, "ADMIN");
