@@ -9,7 +9,12 @@ public class PerformanceTest {
 
         int size = 100000;
 
+        // ArrayList uses a dynamic array, providing O(1) indexed access.
+        // Inserting at the beginning requires shifting elements: O(n).
         ArrayList<Integer> arrayList = new ArrayList<>();
+
+        // LinkedList uses linked nodes, allowing O(1) insertion at the beginning.
+        // Accessing an element using get(i) requires traversal: O(n).
         LinkedList<Integer> linkedList = new LinkedList<>();
 
         for (int i = 0; i < size; i++) {

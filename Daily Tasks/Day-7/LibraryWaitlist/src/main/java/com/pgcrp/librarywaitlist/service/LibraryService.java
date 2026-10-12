@@ -8,12 +8,22 @@ import java.util.*;
 
 public class LibraryService {
 
+    // ArrayList is used to store the book catalogue because it provides
+    // fast indexed access with O(1) time complexity.
     private final ArrayList<Book> catalogue = new ArrayList<>();
+
+    // LinkedHashSet is used to prevent duplicate book IDs while
+    // maintaining the insertion order of books.
 
     private final LinkedHashSet<Integer> bookIds = new LinkedHashSet<>();
 
+    // ArrayDeque is used to maintain the student waitlist because
+    // it supports efficient FIFO operations using offerLast() and pollFirst().
     private final ArrayDeque<String> waitlist = new ArrayDeque<>();
 
+    // PriorityQueue is used to process faculty requests before student requests.
+    // BookRequest.compareTo() determines priority and preserves arrival order
+    // among requests with the same priority using a sequence number.
     private final PriorityQueue<BookRequest> priorityQueue =
             new PriorityQueue<>();
 
@@ -91,6 +101,9 @@ public class LibraryService {
 
     public void removeOverdueBooks() {
 
+        // Iterator is used to safely traverse the catalogue.
+        // iterator.remove() removes overdue entries without causing
+        // ConcurrentModificationException during iteration.
         Iterator<Book> iterator = catalogue.iterator();
 
         int removed = 0;
