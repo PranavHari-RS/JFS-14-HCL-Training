@@ -6,27 +6,33 @@ import java.util.*;
 
 public class ComplaintRepository {
 
-    private final List<Complaint> complaints = new ArrayList<>();
-
-    private final Set<String> complaintIds = new HashSet<>();
+    private final Map<String, Complaint> complaints = new HashMap<>();
 
     private final Queue<Complaint> pendingComplaints = new ArrayDeque<>();
 
     public boolean saveComplaint(String complaintId, Complaint complaint) {
 
-        if (complaintIds.contains(complaintId)) {
+        if (complaints.containsKey(complaintId)) {
             return false;
         }
 
-        complaints.add(complaint);
-        complaintIds.add(complaintId);
+        complaints.put(complaintId, complaint);
+
         pendingComplaints.offer(complaint);
 
         return true;
     }
 
-    public List<Complaint> getAllComplaints() {
-        return Collections.unmodifiableList(complaints);
+    public Collection<Complaint> getAllComplaints() {
+        return Collections.unmodifiableCollection(complaints.values());
+    }
+
+    public Complaint findById(String complaintId) {
+        return complaints.get(complaintId);
+    }
+
+    public boolean complaintExists(String complaintId) {
+        return complaints.containsKey(complaintId);
     }
 
     public Complaint getNextPendingComplaint() {
@@ -37,15 +43,15 @@ public class ComplaintRepository {
         return pendingComplaints.poll();
     }
 
-    public boolean complaintExists(String complaintId) {
-        return complaintIds.contains(complaintId);
-    }
-
     public int getComplaintCount() {
         return complaints.size();
     }
 
     public int getPendingCount() {
         return pendingComplaints.size();
+    }
+
+    public Map<String, Complaint> getSortedComplaintReport() {
+        return Collections.unmodifiableMap(new TreeMap<>(complaints));
     }
 }

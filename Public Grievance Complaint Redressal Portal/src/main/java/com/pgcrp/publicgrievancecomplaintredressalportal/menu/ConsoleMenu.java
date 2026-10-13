@@ -29,6 +29,9 @@ public class ConsoleMenu {
                 System.out.println("7. Rate/Reopen Complaint");
                 System.out.println("8. View SLA Compliance");
                 System.out.println("9. Exit");
+                System.out.println("10. View Sorted Complaint Report");
+                System.out.println("11. View Priority Sorted Report");
+                System.out.println("12. View Status Sorted Report");
 
                 System.out.print("Enter your choice: ");
 
@@ -79,11 +82,26 @@ public class ConsoleMenu {
                     case 4:
 
                         System.out.println("FR4: Update Complaint Status");
+
+                        System.out.print("Enter Complaint ID: ");
+                        String updateId = scanner.nextLine();
+
+                        System.out.print("Enter New Status: ");
+                        String newStatus = scanner.nextLine();
+
+                        complaintService.updateComplaintStatus(updateId, newStatus);
+
                         break;
 
                     case 5:
 
                         System.out.println("FR5: Escalate Complaint");
+
+                        System.out.print("Enter Complaint ID: ");
+                        String escalateId = scanner.nextLine();
+
+                        complaintService.escalateComplaint(escalateId);
+
                         break;
 
                     case 6:
@@ -91,14 +109,10 @@ public class ConsoleMenu {
                         System.out.println("FR6: Track Complaint");
 
                         System.out.print("Enter Complaint ID: ");
-                        String id = scanner.nextLine();
+                        String trackId = scanner.nextLine();
 
-                        if (!complaintService.complaintExists(id)) {
-                            throw new ComplaintNotFoundException(
-                                    "Complaint not found for ID: " + id);
-                        }
+                        complaintService.trackComplaint(trackId);
 
-                        System.out.println("Complaint found: " + id);
                         break;
 
                     case 7:
@@ -115,6 +129,18 @@ public class ConsoleMenu {
 
                         System.out.println("Exiting...");
                         return;
+
+                    case 10:
+                        complaintService.displaySortedReport();
+                        break;
+
+                    case 11:
+                        complaintService.displayPriorityReport();
+                        break;
+
+                    case 12:
+                        complaintService.displayStatusReport();
+                        break;
 
                     default:
 
