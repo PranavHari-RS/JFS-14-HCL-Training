@@ -6,33 +6,44 @@ import java.util.*;
 
 public class ComplaintRepository {
 
-    private final Map<String, Complaint> complaints = new HashMap<>();
+    private final InMemoryRepository<Complaint, String> repository =
+            new InMemoryRepository<>(Complaint::getComplaintId);
 
-    private final Queue<Complaint> pendingComplaints = new ArrayDeque<>();
+    private final Queue<Complaint> pendingComplaints =
+            new ArrayDeque<>();
 
     public boolean saveComplaint(String complaintId, Complaint complaint) {
 
-        if (complaints.containsKey(complaintId)) {
+        if (complaintId == null || complaint == null ||
+                !complaintId.equals(complaint.getComplaintId())) {
+            throw new IllegalArgumentException("Invalid complaint ID");
+        }
+
+        if (repository.existsById(complaintId)) {
             return false;
         }
 
-        complaints.put(complaintId, complaint);
+        repository.save(complaint);
 
-        pendingComplaints.offer(complaint);
+        if ("REGISTERED".equalsIgnoreCase(complaint.getStatus())
+                || "OPEN".equalsIgnoreCase(complaint.getStatus())) {
+
+            pendingComplaints.offer(complaint);
+        }
 
         return true;
     }
 
     public Collection<Complaint> getAllComplaints() {
-        return Collections.unmodifiableCollection(complaints.values());
+        return Collections.unmodifiableList(repository.findAll());
     }
 
     public Complaint findById(String complaintId) {
-        return complaints.get(complaintId);
+        return repository.findById(complaintId).orElse(null);
     }
 
     public boolean complaintExists(String complaintId) {
-        return complaints.containsKey(complaintId);
+        return repository.existsById(complaintId);
     }
 
     public Complaint getNextPendingComplaint() {
@@ -44,7 +55,7 @@ public class ComplaintRepository {
     }
 
     public int getComplaintCount() {
-        return complaints.size();
+        return (int) repository.count();
     }
 
     public int getPendingCount() {
@@ -52,6 +63,30 @@ public class ComplaintRepository {
     }
 
     public Map<String, Complaint> getSortedComplaintReport() {
-        return Collections.unmodifiableMap(new TreeMap<>(complaints));
+
+        Map<String, Complaint> sorted = new TreeMap<>();
+
+        for (Complaint complaint : repository.findAll()) {
+            sorted.put(complaint.getComplaintId(), complaint);
+        }
+
+        return Collections.unmodifiableMap(sorted);
+    }
+
+    public Complaint updateComplaint(String complaintId, Complaint complaint) {
+        return repository.update(complaintId, complaint);
+    }
+
+    public boolean deleteComplaint(String complaintId) {
+
+        boolean deleted = repository.deleteById(complaintId);
+
+        if (deleted) {
+            pendingComplaints.removeIf(
+                    complaint -> complaintId.equals(complaint.getComplaintId())
+            );
+        }
+
+        return deleted;
     }
 }

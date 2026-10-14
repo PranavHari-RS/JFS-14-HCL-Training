@@ -1,0 +1,5 @@
+complaintId,citizenId,category,description,location,status,priority,assignedWorkerId,escalated,rating
+C101,U101,Road,Road damage near bus stand,Karur,REGISTERED,HIGH,,false,0
+C102,U102,Water,Water leakage in main street,Erode,REGISTERED,MEDIUM,,false,0
+C103,U103,Electricity,Street light not working,Coimbatore,IN_PROGRESS,LOW,F101,false,0
+C104,U101,Sanitation,Garbage not collected,Salem,REGISTERED,HIGH,,false,0

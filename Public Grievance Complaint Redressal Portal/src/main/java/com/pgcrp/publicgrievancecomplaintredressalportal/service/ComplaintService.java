@@ -8,12 +8,19 @@ import com.pgcrp.publicgrievancecomplaintredressalportal.model.Complaint;
 import com.pgcrp.publicgrievancecomplaintredressalportal.model.FieldWorker;
 import com.pgcrp.publicgrievancecomplaintredressalportal.repository.ComplaintRepository;
 import com.pgcrp.publicgrievancecomplaintredressalportal.strategy.ComplaintRoutingStrategy;
+import com.pgcrp.publicgrievancecomplaintredressalportal.repository.CitizenRepository;
+import com.pgcrp.publicgrievancecomplaintredressalportal.repository.FieldWorkerRepository;
+import com.pgcrp.publicgrievancecomplaintredressalportal.sampledata.CsvDataLoader;
 
 import java.util.*;
 
 public class ComplaintService {
 
     private final ComplaintRepository repository = new ComplaintRepository();
+
+    private final CitizenRepository citizenRepository = new CitizenRepository();
+
+    private final FieldWorkerRepository fieldWorkerRepository = new FieldWorkerRepository();
 
     private final Map<String, FieldWorker> workerMap = new HashMap<>();
 
@@ -23,14 +30,36 @@ public class ComplaintService {
 
     public ComplaintService() {
 
-        addWorker(new FieldWorker(
-                "W001", "Ravi", "Road", "9876543210", true));
+        System.out.println("\n===== LOADING CSV SEED DATA =====");
 
-        addWorker(new FieldWorker(
-                "W002", "Kumar", "Water", "9876543211", true));
+        CsvDataLoader.loadComplaints(repository);
 
-        addWorker(new FieldWorker(
-                "W003", "Arun", "Electricity", "9876543212", true));
+        CsvDataLoader.loadCitizens(citizenRepository);
+
+        CsvDataLoader.loadFieldWorkers(fieldWorkerRepository);
+
+        for (FieldWorker worker : fieldWorkerRepository.findAll()) {
+            addWorker(worker);
+        }
+
+        complaintCounter = repository.getAllComplaints()
+                .stream()
+                .map(Complaint::getComplaintId)
+                .filter(id -> id != null && id.matches("C\\d+"))
+                .mapToInt(id -> Integer.parseInt(id.substring(1)))
+                .max()
+                .orElse(0) + 1;
+
+        System.out.println("\n===== DATA LOADED SUCCESSFULLY =====");
+
+        System.out.println(
+                "Total Complaints: " + repository.getComplaintCount());
+
+        System.out.println(
+                "Total Citizens: " + citizenRepository.count());
+
+        System.out.println(
+                "Total Field Workers: " + fieldWorkerRepository.count());
     }
 
     private void addWorker(FieldWorker worker) {

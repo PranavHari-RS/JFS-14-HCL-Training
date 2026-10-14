@@ -1,0 +1,4 @@
+workerId,name,department,phoneNumber,available
+F101,Ravi,Electricity,9876543220,true
+F102,Manoj,Water,9876543221,true
+F103,Santhosh,Road,9876543222,true
