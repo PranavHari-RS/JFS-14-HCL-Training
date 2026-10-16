@@ -1,0 +1,46 @@
+package com.pgcrp.promptreviewdrill.service;
+
+import com.pgcrp.promptreviewdrill.model.Student;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class StudentService {
+    private final List<Student> students = new ArrayList<>();
+
+    public void addStudent(Student student) {
+        if (student == null) {
+            throw new IllegalArgumentException("Student cannot be null.");
+        }
+        students.add(student);
+    }
+
+    public Student getStudentById(int id) {
+        return students.stream()
+                .filter(student -> student.getId() == id)
+                .findFirst()
+                .orElse(null);
+    }
+
+    public List<Student> getAllStudents() {
+        return new ArrayList<>(students);
+    }
+
+    public boolean updateStudent(int id, Student updatedStudent) {
+        if (updatedStudent == null) {
+            throw new IllegalArgumentException("Updated student cannot be null.");
+        }
+
+        for (int index = 0; index < students.size(); index++) {
+            if (students.get(index).getId() == id) {
+                students.set(index, updatedStudent);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean deleteStudent(int id) {
+        return students.removeIf(student -> student.getId() == id);
+    }
+}
