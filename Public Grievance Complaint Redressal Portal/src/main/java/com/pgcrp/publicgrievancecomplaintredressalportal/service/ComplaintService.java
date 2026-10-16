@@ -1,279 +1,440 @@
-package com.pgcrp.publicgrievancecomplaintredressalportal.service;
+    package com.pgcrp.publicgrievancecomplaintredressalportal.service;
+    
+    import com.pgcrp.publicgrievancecomplaintredressalportal.comparator.ComplaintPriorityComparator;
+    import com.pgcrp.publicgrievancecomplaintredressalportal.comparator.ComplaintStatusComparator;
+    import com.pgcrp.publicgrievancecomplaintredressalportal.exception.ComplaintNotFoundException;
+    import com.pgcrp.publicgrievancecomplaintredressalportal.exception.InvalidComplaintException;
+    import com.pgcrp.publicgrievancecomplaintredressalportal.model.Complaint;
+    import com.pgcrp.publicgrievancecomplaintredressalportal.model.FieldWorker;
+    import com.pgcrp.publicgrievancecomplaintredressalportal.repository.ComplaintRepository;
+    import com.pgcrp.publicgrievancecomplaintredressalportal.strategy.ComplaintRoutingStrategy;
+    import com.pgcrp.publicgrievancecomplaintredressalportal.repository.CitizenRepository;
+    import com.pgcrp.publicgrievancecomplaintredressalportal.repository.FieldWorkerRepository;
+    import com.pgcrp.publicgrievancecomplaintredressalportal.sampledata.CsvDataLoader;
+    import com.pgcrp.publicgrievancecomplaintredressalportal.model.ComplaintFeedback;
+    import com.pgcrp.publicgrievancecomplaintredressalportal.repository.ComplaintFeedbackRepository;
+    import java.time.LocalDateTime;
+    import java.time.Duration;
 
-import com.pgcrp.publicgrievancecomplaintredressalportal.comparator.ComplaintPriorityComparator;
-import com.pgcrp.publicgrievancecomplaintredressalportal.comparator.ComplaintStatusComparator;
-import com.pgcrp.publicgrievancecomplaintredressalportal.exception.ComplaintNotFoundException;
-import com.pgcrp.publicgrievancecomplaintredressalportal.exception.InvalidComplaintException;
-import com.pgcrp.publicgrievancecomplaintredressalportal.model.Complaint;
-import com.pgcrp.publicgrievancecomplaintredressalportal.model.FieldWorker;
-import com.pgcrp.publicgrievancecomplaintredressalportal.repository.ComplaintRepository;
-import com.pgcrp.publicgrievancecomplaintredressalportal.strategy.ComplaintRoutingStrategy;
-import com.pgcrp.publicgrievancecomplaintredressalportal.repository.CitizenRepository;
-import com.pgcrp.publicgrievancecomplaintredressalportal.repository.FieldWorkerRepository;
-import com.pgcrp.publicgrievancecomplaintredressalportal.sampledata.CsvDataLoader;
+    import java.util.*;
+    
+    public class ComplaintService {
+    
+        private final ComplaintRepository repository = new ComplaintRepository();
+    
+        private final CitizenRepository citizenRepository = new CitizenRepository();
+    
+        private final FieldWorkerRepository fieldWorkerRepository = new FieldWorkerRepository();
+    
+        private final Map<String, FieldWorker> workerMap = new HashMap<>();
+    
+        private final List<FieldWorker> workers = new ArrayList<>();
+    
+        private int complaintCounter = 1;
 
-import java.util.*;
+        private final ComplaintFeedbackRepository feedbackRepository =
+                new ComplaintFeedbackRepository();
 
-public class ComplaintService {
+        private long feedbackCounter = 1;
 
-    private final ComplaintRepository repository = new ComplaintRepository();
 
-    private final CitizenRepository citizenRepository = new CitizenRepository();
-
-    private final FieldWorkerRepository fieldWorkerRepository = new FieldWorkerRepository();
-
-    private final Map<String, FieldWorker> workerMap = new HashMap<>();
-
-    private final List<FieldWorker> workers = new ArrayList<>();
-
-    private int complaintCounter = 1;
-
-    public ComplaintService() {
-
-        System.out.println("\n===== LOADING CSV SEED DATA =====");
-
-        CsvDataLoader.loadComplaints(repository);
-
-        CsvDataLoader.loadCitizens(citizenRepository);
-
-        CsvDataLoader.loadFieldWorkers(fieldWorkerRepository);
-
-        for (FieldWorker worker : fieldWorkerRepository.findAll()) {
-            addWorker(worker);
-        }
-
-        complaintCounter = repository.getAllComplaints()
-                .stream()
-                .map(Complaint::getComplaintId)
-                .filter(id -> id != null && id.matches("C\\d+"))
-                .mapToInt(id -> Integer.parseInt(id.substring(1)))
-                .max()
-                .orElse(0) + 1;
-
-        System.out.println("\n===== DATA LOADED SUCCESSFULLY =====");
-
-        System.out.println(
-                "Total Complaints: " + repository.getComplaintCount());
-
-        System.out.println(
-                "Total Citizens: " + citizenRepository.count());
-
-        System.out.println(
-                "Total Field Workers: " + fieldWorkerRepository.count());
-    }
-
-    private void addWorker(FieldWorker worker) {
-
-        workerMap.put(worker.getWorkerId(), worker);
-
-        workers.add(worker);
-    }
-
-    public FieldWorker findWorkerById(String workerId) {
-        return workerMap.get(workerId);
-    }
-
-    public void fileComplaint(String citizenId, String category,
-                              String description, String location) {
-
-        Complaint.validateDescription(description);
-
-        String complaintId = String.format("C%03d", complaintCounter);
-
-        Complaint complaint = new Complaint();
-
-        complaint.setComplaintId(complaintId);
-        complaint.setCitizenId(citizenId);
-        complaint.setCategory(category);
-        complaint.setDescription(description);
-        complaint.setLocation(location);
-        complaint.setStatus("REGISTERED");
-        complaint.setPriority("NORMAL");
-
-        boolean saved = repository.saveComplaint(complaintId, complaint);
-
-        if (saved) {
-
-            complaintCounter++;
-
-            System.out.println("Complaint filed successfully!");
-            System.out.println("Complaint ID: " + complaintId);
-            System.out.println("Status: REGISTERED");
-
-        } else {
-            System.out.println("Duplicate complaint ID!");
-        }
-    }
-
-    public void routeComplaint() {
-
-        Complaint complaint = repository.getNextPendingComplaint();
-
-        if (complaint == null) {
-            System.out.println("No pending complaints.");
-            return;
-        }
-
-        complaint.setStatus("ROUTED");
-
-        repository.removeNextPendingComplaint();
-
-        System.out.println("Complaint routed successfully!");
-        System.out.println("Complaint ID: " + complaint.getComplaintId());
-        System.out.println("Category: " + complaint.getCategory());
-        System.out.println("Status: " + complaint.getStatus());
-    }
-
-    public void assignFieldWorker(String complaintId,
-                                  ComplaintRoutingStrategy strategy) {
-
-        Complaint complaint = getComplaintOrThrow(complaintId);
-
-        if (!"ROUTED".equals(complaint.getStatus())) {
-
+        public ComplaintService() {
+    
+            System.out.println("\n===== LOADING CSV SEED DATA =====");
+    
+            CsvDataLoader.loadComplaints(repository);
+    
+            CsvDataLoader.loadCitizens(citizenRepository);
+    
+            CsvDataLoader.loadFieldWorkers(fieldWorkerRepository);
+    
+            for (FieldWorker worker : fieldWorkerRepository.findAll()) {
+                addWorker(worker);
+            }
+    
+            complaintCounter = repository.getAllComplaints()
+                    .stream()
+                    .map(Complaint::getComplaintId)
+                    .filter(id -> id != null && id.matches("C\\d+"))
+                    .mapToInt(id -> Integer.parseInt(id.substring(1)))
+                    .max()
+                    .orElse(0) + 1;
+    
+            System.out.println("\n===== DATA LOADED SUCCESSFULLY =====");
+    
             System.out.println(
-                    "Complaint must be routed before assignment.");
+                    "Total Complaints: " + repository.getComplaintCount());
+    
+            System.out.println(
+                    "Total Citizens: " + citizenRepository.count());
+    
+            System.out.println(
+                    "Total Field Workers: " + fieldWorkerRepository.count());
+        }
+    
+        private void addWorker(FieldWorker worker) {
+    
+            workerMap.put(worker.getWorkerId(), worker);
+    
+            workers.add(worker);
+        }
+    
+        public FieldWorker findWorkerById(String workerId) {
+            return workerMap.get(workerId);
+        }
+    
+        public void fileComplaint(String citizenId, String category,
+                                  String description, String location) {
+    
+            Complaint.validateDescription(description);
+    
+            String complaintId = String.format("C%03d", complaintCounter);
+    
+            Complaint complaint = new Complaint();
+    
+            complaint.setComplaintId(complaintId);
+            complaint.setCitizenId(citizenId);
+            complaint.setCategory(category);
+            complaint.setDescription(description);
+            complaint.setLocation(location);
+            complaint.setStatus("REGISTERED");
+            complaint.setPriority("NORMAL");
+            complaint.setCreatedAt(LocalDateTime.now());
+    
+            boolean saved = repository.saveComplaint(complaintId, complaint);
+    
+            if (saved) {
+    
+                complaintCounter++;
+    
+                System.out.println("Complaint filed successfully!");
+                System.out.println("Complaint ID: " + complaintId);
+                System.out.println("Status: REGISTERED");
+    
+            } else {
+                System.out.println("Duplicate complaint ID!");
+            }
+        }
+    
+        public void routeComplaint() {
+    
+            Complaint complaint = repository.getNextPendingComplaint();
+    
+            if (complaint == null) {
+                System.out.println("No pending complaints.");
+                return;
+            }
+    
+            complaint.setStatus("ROUTED");
+    
+            repository.removeNextPendingComplaint();
+    
+            System.out.println("Complaint routed successfully!");
+            System.out.println("Complaint ID: " + complaint.getComplaintId());
+            System.out.println("Category: " + complaint.getCategory());
+            System.out.println("Status: " + complaint.getStatus());
+        }
+    
+        public void assignFieldWorker(String complaintId,
+                                      ComplaintRoutingStrategy strategy) {
+    
+            Complaint complaint = getComplaintOrThrow(complaintId);
+    
+            if (!"ROUTED".equals(complaint.getStatus())) {
+    
+                System.out.println(
+                        "Complaint must be routed before assignment.");
+    
+                return;
+            }
+    
+            FieldWorker worker = strategy.assignWorker(complaint, workers);
+    
+            if (worker == null) {
+    
+                System.out.println("No suitable field worker available.");
+    
+                return;
+            }
+    
+            complaint.setAssignedWorkerId(worker.getWorkerId());
+            complaint.setStatus("ASSIGNED");
+    
+            worker.setActiveComplaintCount(
+                    worker.getActiveComplaintCount() + 1);
+    
+            System.out.println("Field worker assigned successfully!");
+            System.out.println("Complaint ID: " + complaintId);
+            System.out.println("Worker ID: " + worker.getWorkerId());
+            System.out.println("Status: ASSIGNED");
+        }
+    
+        private Complaint getComplaintOrThrow(String complaintId) {
+    
+            Complaint complaint = repository.findById(complaintId);
+    
+            if (complaint == null) {
+                throw new ComplaintNotFoundException(
+                        "Complaint not found: " + complaintId);
+            }
+    
+            return complaint;
+        }
+    
+        public boolean complaintExists(String complaintId) {
+            return repository.complaintExists(complaintId);
+        }
+    
+        public void updateComplaintStatus(String complaintId, String newStatus) {
+    
+            Complaint complaint = getComplaintOrThrow(complaintId);
+    
+            if (newStatus == null || newStatus.isBlank()) {
+                throw new InvalidComplaintException(
+                        "Complaint status cannot be empty.");
+            }
+    
+            String status = newStatus.trim().toUpperCase();
+    
+            Set<String> validStatuses = Set.of(
+                    "REGISTERED",
+                    "ROUTED",
+                    "ASSIGNED",
+                    "IN_PROGRESS",
+                    "RESOLVED",
+                    "REOPENED"
+            );
+    
+            if (!validStatuses.contains(status)) {
+                throw new InvalidComplaintException(
+                        "Invalid complaint status: " + newStatus);
+            }
 
-            return;
+            complaint.setStatus(status);
+
+            if ("RESOLVED".equals(status)) {
+                complaint.setResolvedAt(LocalDateTime.now());
+            } else {
+                complaint.setResolvedAt(null);
+            }
+    
+            System.out.println("Complaint status updated successfully!");
+            System.out.println("Complaint ID: " + complaintId);
+            System.out.println("New Status: " + status);
+        }
+    
+        public void escalateComplaint(String complaintId) {
+    
+            Complaint complaint = getComplaintOrThrow(complaintId);
+    
+            if (complaint.isEscalated()) {
+                System.out.println("Complaint is already escalated.");
+                return;
+            }
+    
+            if ("RESOLVED".equals(complaint.getStatus())) {
+                System.out.println("Resolved complaints cannot be escalated.");
+                return;
+            }
+    
+            complaint.setEscalated(true);
+            complaint.setPriority("HIGH");
+    
+            System.out.println("Complaint escalated successfully!");
+            System.out.println("Complaint ID: " + complaintId);
+            System.out.println("Priority: HIGH");
+        }
+    
+        public void trackComplaint(String complaintId) {
+    
+            Complaint complaint = getComplaintOrThrow(complaintId);
+    
+            System.out.println("\n===== COMPLAINT DETAILS =====");
+    
+            System.out.println("Complaint ID: " + complaint.getComplaintId());
+            System.out.println("Citizen ID: " + complaint.getCitizenId());
+            System.out.println("Category: " + complaint.getCategory());
+            System.out.println("Description: " + complaint.getDescription());
+            System.out.println("Location: " + complaint.getLocation());
+            System.out.println("Status: " + complaint.getStatus());
+            System.out.println("Priority: " + complaint.getPriority());
+            System.out.println("Assigned Worker: " + complaint.getAssignedWorkerId());
+            System.out.println("Escalated: " + complaint.isEscalated());
+        }
+    
+        public void displaySortedReport() {
+    
+            System.out.println("\n===== SORTED COMPLAINT REPORT =====");
+    
+            repository.getSortedComplaintReport().forEach(
+                    (id, complaint) -> System.out.println(complaint)
+            );
+        }
+    
+        public void displayPriorityReport() {
+    
+            List<Complaint> complaints =
+                    new ArrayList<>(repository.getAllComplaints());
+    
+            complaints.sort(new ComplaintPriorityComparator());
+    
+            System.out.println("\n===== PRIORITY SORTED REPORT =====");
+    
+            complaints.forEach(System.out::println);
+        }
+    
+        public void displayStatusReport() {
+    
+            List<Complaint> complaints =
+                    new ArrayList<>(repository.getAllComplaints());
+    
+            complaints.sort(new ComplaintStatusComparator());
+    
+            System.out.println("\n===== STATUS SORTED REPORT =====");
+    
+            complaints.forEach(System.out::println);
         }
 
-        FieldWorker worker = strategy.assignWorker(complaint, workers);
+        public void rateComplaint(String complaintId, int rating, String comments) {
 
-        if (worker == null) {
+            Complaint complaint = getComplaintOrThrow(complaintId);
 
-            System.out.println("No suitable field worker available.");
+            if (!"RESOLVED".equals(complaint.getStatus())) {
+                throw new InvalidComplaintException(
+                        "Only resolved complaints can be rated."
+                );
+            }
 
-            return;
+            if (rating < 1 || rating > 5) {
+                throw new InvalidComplaintException(
+                        "Rating must be between 1 and 5."
+                );
+            }
+
+            if (comments == null || comments.isBlank()) {
+                throw new InvalidComplaintException(
+                        "Feedback comments cannot be empty."
+                );
+            }
+
+            ComplaintFeedback feedback = new ComplaintFeedback(
+                    complaintId,
+                    complaint.getCitizenId(),
+                    rating,
+                    comments
+            );
+
+            feedback.setId(feedbackCounter++);
+
+            feedbackRepository.save(feedback);
+
+            complaint.setRating(rating);
+
+            System.out.println("Feedback submitted successfully!");
+            System.out.println("Complaint ID: " + complaintId);
+            System.out.println("Rating: " + rating);
+            System.out.println("Feedback: " + comments);
         }
 
-        complaint.setAssignedWorkerId(worker.getWorkerId());
-        complaint.setStatus("ASSIGNED");
+        public void reopenComplaint(String complaintId, String reason) {
 
-        worker.setActiveComplaintCount(
-                worker.getActiveComplaintCount() + 1);
+            Complaint complaint = getComplaintOrThrow(complaintId);
 
-        System.out.println("Field worker assigned successfully!");
-        System.out.println("Complaint ID: " + complaintId);
-        System.out.println("Worker ID: " + worker.getWorkerId());
-        System.out.println("Status: ASSIGNED");
-    }
+            if (!"RESOLVED".equals(complaint.getStatus())) {
+                throw new InvalidComplaintException(
+                        "Only resolved complaints can be reopened."
+                );
+            }
 
-    private Complaint getComplaintOrThrow(String complaintId) {
+            if (reason == null || reason.isBlank()) {
+                throw new InvalidComplaintException(
+                        "Reopening reason cannot be empty."
+                );
+            }
 
-        Complaint complaint = repository.findById(complaintId);
+            complaint.setStatus("REOPENED");
+            complaint.setResolvedAt(null);
 
-        if (complaint == null) {
-            throw new ComplaintNotFoundException(
-                    "Complaint not found: " + complaintId);
+            System.out.println("Complaint reopened successfully!");
+            System.out.println("Complaint ID: " + complaintId);
+            System.out.println("Reason: " + reason);
+            System.out.println("New Status: REOPENED");
         }
 
-        return complaint;
-    }
+        public void viewSLACompliance() {
 
-    public boolean complaintExists(String complaintId) {
-        return repository.complaintExists(complaintId);
-    }
+            List<Complaint> complaints =
+                    new ArrayList<>(repository.getAllComplaints());
 
-    public void updateComplaintStatus(String complaintId, String newStatus) {
+            if (complaints.isEmpty()) {
+                System.out.println("No complaints available.");
+                return;
+            }
 
-        Complaint complaint = getComplaintOrThrow(complaintId);
+            int compliant = 0;
+            int breached = 0;
+            int unavailable = 0;
 
-        if (newStatus == null || newStatus.isBlank()) {
-            throw new InvalidComplaintException(
-                    "Complaint status cannot be empty.");
+            System.out.println("\n===== SLA COMPLIANCE REPORT =====");
+
+            for (Complaint complaint : complaints) {
+
+                LocalDateTime createdAt = complaint.getCreatedAt();
+                LocalDateTime resolvedAt = complaint.getResolvedAt();
+
+                if (createdAt == null) {
+                    unavailable++;
+
+                    System.out.println("\nComplaint ID: "
+                            + complaint.getComplaintId());
+                    System.out.println("SLA Status: DATA UNAVAILABLE");
+                    continue;
+                }
+
+                long slaHours = 48;
+
+                LocalDateTime deadline = createdAt.plusHours(slaHours);
+
+                LocalDateTime comparisonTime =
+                        resolvedAt != null ? resolvedAt : LocalDateTime.now();
+
+                boolean isCompliant = !comparisonTime.isAfter(deadline);
+
+                System.out.println("\nComplaint ID: "
+                        + complaint.getComplaintId());
+
+                System.out.println("Category: "
+                        + complaint.getCategory());
+
+                System.out.println("Status: "
+                        + complaint.getStatus());
+
+                System.out.println("SLA Deadline: " + deadline);
+
+                if (isCompliant) {
+                    compliant++;
+                    System.out.println("SLA Status: COMPLIANT");
+                } else {
+                    breached++;
+                    System.out.println("SLA Status: BREACHED");
+                }
+            }
+
+            int evaluated = compliant + breached;
+
+            double complianceRate = evaluated == 0
+                    ? 0
+                    : (compliant * 100.0) / evaluated;
+
+            System.out.println("\n===== SLA SUMMARY =====");
+
+            System.out.println("Total Complaints: " + complaints.size());
+            System.out.println("SLA Compliant: " + compliant);
+            System.out.println("SLA Breached: " + breached);
+            System.out.println("Data Unavailable: " + unavailable);
+
+            System.out.printf("SLA Compliance Rate: %.2f%%%n",
+                    complianceRate);
         }
 
-        String status = newStatus.trim().toUpperCase();
-
-        Set<String> validStatuses = Set.of(
-                "REGISTERED",
-                "ROUTED",
-                "ASSIGNED",
-                "IN_PROGRESS",
-                "RESOLVED"
-        );
-
-        if (!validStatuses.contains(status)) {
-            throw new InvalidComplaintException(
-                    "Invalid complaint status: " + newStatus);
-        }
-
-        complaint.setStatus(status);
-
-        System.out.println("Complaint status updated successfully!");
-        System.out.println("Complaint ID: " + complaintId);
-        System.out.println("New Status: " + status);
     }
-
-    public void escalateComplaint(String complaintId) {
-
-        Complaint complaint = getComplaintOrThrow(complaintId);
-
-        if (complaint.isEscalated()) {
-            System.out.println("Complaint is already escalated.");
-            return;
-        }
-
-        if ("RESOLVED".equals(complaint.getStatus())) {
-            System.out.println("Resolved complaints cannot be escalated.");
-            return;
-        }
-
-        complaint.setEscalated(true);
-        complaint.setPriority("HIGH");
-
-        System.out.println("Complaint escalated successfully!");
-        System.out.println("Complaint ID: " + complaintId);
-        System.out.println("Priority: HIGH");
-    }
-
-    public void trackComplaint(String complaintId) {
-
-        Complaint complaint = getComplaintOrThrow(complaintId);
-
-        System.out.println("\n===== COMPLAINT DETAILS =====");
-
-        System.out.println("Complaint ID: " + complaint.getComplaintId());
-        System.out.println("Citizen ID: " + complaint.getCitizenId());
-        System.out.println("Category: " + complaint.getCategory());
-        System.out.println("Description: " + complaint.getDescription());
-        System.out.println("Location: " + complaint.getLocation());
-        System.out.println("Status: " + complaint.getStatus());
-        System.out.println("Priority: " + complaint.getPriority());
-        System.out.println("Assigned Worker: " + complaint.getAssignedWorkerId());
-        System.out.println("Escalated: " + complaint.isEscalated());
-    }
-
-    public void displaySortedReport() {
-
-        System.out.println("\n===== SORTED COMPLAINT REPORT =====");
-
-        repository.getSortedComplaintReport().forEach(
-                (id, complaint) -> System.out.println(complaint)
-        );
-    }
-
-    public void displayPriorityReport() {
-
-        List<Complaint> complaints =
-                new ArrayList<>(repository.getAllComplaints());
-
-        complaints.sort(new ComplaintPriorityComparator());
-
-        System.out.println("\n===== PRIORITY SORTED REPORT =====");
-
-        complaints.forEach(System.out::println);
-    }
-
-    public void displayStatusReport() {
-
-        List<Complaint> complaints =
-                new ArrayList<>(repository.getAllComplaints());
-
-        complaints.sort(new ComplaintStatusComparator());
-
-        System.out.println("\n===== STATUS SORTED REPORT =====");
-
-        complaints.forEach(System.out::println);
-    }
-}

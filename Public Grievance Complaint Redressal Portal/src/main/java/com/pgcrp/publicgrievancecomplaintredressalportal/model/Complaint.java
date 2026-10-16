@@ -1,6 +1,8 @@
 package com.pgcrp.publicgrievancecomplaintredressalportal.model;
+
 import com.pgcrp.publicgrievancecomplaintredressalportal.common.BaseEntity;
 import com.pgcrp.publicgrievancecomplaintredressalportal.exception.InvalidComplaintException;
+import java.time.LocalDateTime;
 
 public class Complaint extends BaseEntity{
 
@@ -14,6 +16,8 @@ public class Complaint extends BaseEntity{
     private String assignedWorkerId;
     private boolean escalated;
     private int rating;
+    private LocalDateTime createdAt;
+    private LocalDateTime resolvedAt;
 
     public Complaint() {
     }
@@ -32,6 +36,22 @@ public class Complaint extends BaseEntity{
         this.assignedWorkerId = assignedWorkerId;
         this.escalated = escalated;
         this.rating = rating;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getResolvedAt() {
+        return resolvedAt;
+    }
+
+    public void setResolvedAt(LocalDateTime resolvedAt) {
+        this.resolvedAt = resolvedAt;
     }
 
     public String getComplaintId() {

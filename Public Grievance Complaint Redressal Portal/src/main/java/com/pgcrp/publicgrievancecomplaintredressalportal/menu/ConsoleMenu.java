@@ -117,12 +117,59 @@ public class ConsoleMenu {
 
                     case 7:
 
-                        System.out.println("FR7: Rate/Reopen Complaint");
+                        System.out.println("\n===== FR7: RATE / REOPEN COMPLAINT =====");
+
+                        System.out.print("Enter Complaint ID: ");
+                        String feedbackComplaintId = scanner.nextLine();
+
+                        System.out.println("1. Rate Complaint");
+                        System.out.println("2. Reopen Complaint");
+
+                        System.out.print("Enter choice: ");
+                        int feedbackChoice = Integer.parseInt(scanner.nextLine());
+
+                        switch (feedbackChoice) {
+
+                            case 1:
+
+                                System.out.print("Enter Rating (1-5): ");
+                                int rating = Integer.parseInt(scanner.nextLine());
+
+                                System.out.print("Enter Feedback Comments: ");
+                                String comments = scanner.nextLine();
+
+                                complaintService.rateComplaint(
+                                        feedbackComplaintId,
+                                        rating,
+                                        comments
+                                );
+
+                                break;
+
+                            case 2:
+
+                                System.out.print("Enter Reopening Reason: ");
+                                String reason = scanner.nextLine();
+
+                                complaintService.reopenComplaint(
+                                        feedbackComplaintId,
+                                        reason
+                                );
+
+                                break;
+
+                            default:
+                                System.out.println("Invalid choice.");
+                        }
+
                         break;
 
                     case 8:
 
                         System.out.println("FR8: View SLA Compliance");
+
+                        complaintService.viewSLACompliance();
+
                         break;
 
                     case 9:
