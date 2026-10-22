@@ -1,7 +1,5 @@
 package com.pgcrp.publicgrievancecomplaintredressalportal.menu;
 
-import com.pgcrp.publicgrievancecomplaintredressalportal.model.Complaint;
-import com.pgcrp.publicgrievancecomplaintredressalportal.exception.ComplaintNotFoundException;
 import com.pgcrp.publicgrievancecomplaintredressalportal.service.ComplaintService;
 import com.pgcrp.publicgrievancecomplaintredressalportal.strategy.CategoryBasedRouting;
 
@@ -194,11 +192,19 @@ public class ConsoleMenu {
                         System.out.println("Invalid choice.");
                 }
 
-            } catch (Exception e) {
+            }  catch (NumberFormatException e) {
 
-                System.out.println("Error: " + e.getMessage());
-                System.out.println("Returning to main menu...");
-            }
+            System.out.println("Invalid input! Please enter a valid number.");
+
+        } catch (IllegalArgumentException e) {
+
+            System.out.println("Invalid input: " + e.getMessage());
+
+        } catch (Exception e) {
+
+            System.out.println("Error: " + e.getMessage());
+            System.out.println("Returning to main menu...");
+        }
         }
     }
 }

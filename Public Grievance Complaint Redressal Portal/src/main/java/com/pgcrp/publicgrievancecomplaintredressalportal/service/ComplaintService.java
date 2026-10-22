@@ -317,6 +317,12 @@
                 );
             }
 
+            if (!feedbackRepository.findByComplaintId(complaintId).isEmpty()) {
+                throw new InvalidComplaintException(
+                        "Feedback has already been submitted for this complaint."
+                );
+            }
+
             ComplaintFeedback feedback = new ComplaintFeedback(
                     complaintId,
                     complaint.getCitizenId(),
@@ -346,6 +352,12 @@
                 );
             }
 
+            if (complaint.isReopened()) {
+                throw new InvalidComplaintException(
+                        "Complaint can be reopened only once."
+                );
+            }
+
             if (reason == null || reason.isBlank()) {
                 throw new InvalidComplaintException(
                         "Reopening reason cannot be empty."
@@ -353,6 +365,7 @@
             }
 
             complaint.setStatus("REOPENED");
+            complaint.setReopened(true);
             complaint.setResolvedAt(null);
 
             System.out.println("Complaint reopened successfully!");

@@ -18,10 +18,18 @@ public class Complaint extends BaseEntity{
     private int rating;
     private LocalDateTime createdAt;
     private LocalDateTime resolvedAt;
+    private boolean reopened;
 
     public Complaint() {
     }
 
+    public boolean isReopened() {
+        return reopened;
+    }
+
+    public void setReopened(boolean reopened) {
+        this.reopened = reopened;
+    }
     public Complaint(String complaintId, String citizenId, String category,
                      String description, String location, String status,
                      String priority, String assignedWorkerId,
