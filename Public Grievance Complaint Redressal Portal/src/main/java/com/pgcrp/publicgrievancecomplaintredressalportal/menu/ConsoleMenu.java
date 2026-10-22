@@ -1,9 +1,10 @@
 package com.pgcrp.publicgrievancecomplaintredressalportal.menu;
 
 import com.pgcrp.publicgrievancecomplaintredressalportal.service.ComplaintService;
-import com.pgcrp.publicgrievancecomplaintredressalportal.strategy.CategoryBasedRouting;
+import com.pgcrp.publicgrievancecomplaintredressalportal.strategy.ComplaintRoutingStrategy;
 
 import java.util.Scanner;
+import java.util.Comparator;
 
 public class ConsoleMenu {
 
@@ -71,10 +72,45 @@ public class ConsoleMenu {
                         System.out.print("Enter Complaint ID: ");
                         String complaintId = scanner.nextLine();
 
+                        ComplaintRoutingStrategy categoryStrategy = (complaint, workers) ->
+                                workers.stream()
+                                        .filter(worker -> worker.isAvailable()
+                                                && worker.getDepartment() != null
+                                                && worker.getDepartment()
+                                                .equalsIgnoreCase(complaint.getCategory()))
+                                        .findFirst()
+                                        .orElse(null);
+
+                        ComplaintRoutingStrategy leastLoadedStrategy = (complaint, workers) ->
+                                workers.stream()
+                                        .filter(worker -> worker.isAvailable())
+                                        .min(Comparator.comparingInt(
+                                                worker -> worker.getActiveComplaintCount()))
+                                        .orElse(null);
+
+                        System.out.println("Select Routing Strategy:");
+                        System.out.println("1. Category Based Routing");
+                        System.out.println("2. Least Loaded Routing");
+                        System.out.print("Enter choice: ");
+
+                        int strategyChoice = Integer.parseInt(scanner.nextLine());
+
+                        ComplaintRoutingStrategy selectedStrategy;
+
+                        if (strategyChoice == 1) {
+                            selectedStrategy = categoryStrategy;
+                        } else if (strategyChoice == 2) {
+                            selectedStrategy = leastLoadedStrategy;
+                        } else {
+                            System.out.println("Invalid routing strategy.");
+                            break;
+                        }
+
                         complaintService.assignFieldWorker(
                                 complaintId,
-                                new CategoryBasedRouting()
+                                selectedStrategy
                         );
+
                         break;
 
                     case 4:

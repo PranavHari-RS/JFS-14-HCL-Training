@@ -5,6 +5,7 @@ import com.pgcrp.publicgrievancecomplaintredressalportal.model.FieldWorker;
 
 import java.util.List;
 
+@FunctionalInterface
 public interface ComplaintRoutingStrategy {
 
     FieldWorker assignWorker(

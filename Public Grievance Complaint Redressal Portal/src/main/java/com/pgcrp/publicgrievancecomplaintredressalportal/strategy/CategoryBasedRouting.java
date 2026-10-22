@@ -11,16 +11,12 @@ public class CategoryBasedRouting implements ComplaintRoutingStrategy {
     public FieldWorker assignWorker(
             Complaint complaint, List<FieldWorker> workers) {
 
-        for (FieldWorker worker : workers) {
-            if (worker.isAvailable()
-                    && worker.getDepartment() != null
-                    && worker.getDepartment()
-                    .equalsIgnoreCase(complaint.getCategory())) {
-                return worker;
-            }
-        }
-
-        return null;
+        return workers.stream()
+                .filter(worker -> worker.isAvailable()
+                        && worker.getDepartment() != null
+                        && worker.getDepartment()
+                        .equalsIgnoreCase(complaint.getCategory()))
+                .findFirst()
+                .orElse(null);
     }
-
 }

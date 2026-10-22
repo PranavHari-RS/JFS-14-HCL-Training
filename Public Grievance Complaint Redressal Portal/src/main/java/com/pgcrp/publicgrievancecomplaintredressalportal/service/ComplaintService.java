@@ -1,7 +1,5 @@
     package com.pgcrp.publicgrievancecomplaintredressalportal.service;
-    
-    import com.pgcrp.publicgrievancecomplaintredressalportal.comparator.ComplaintPriorityComparator;
-    import com.pgcrp.publicgrievancecomplaintredressalportal.comparator.ComplaintStatusComparator;
+
     import com.pgcrp.publicgrievancecomplaintredressalportal.exception.ComplaintNotFoundException;
     import com.pgcrp.publicgrievancecomplaintredressalportal.exception.InvalidComplaintException;
     import com.pgcrp.publicgrievancecomplaintredressalportal.model.Complaint;
@@ -270,28 +268,65 @@
                     (id, complaint) -> System.out.println(complaint)
             );
         }
-    
+
         public void displayPriorityReport() {
-    
+
             List<Complaint> complaints =
                     new ArrayList<>(repository.getAllComplaints());
-    
-            complaints.sort(new ComplaintPriorityComparator());
-    
+
+            Map<String, Integer> priorityRank = Map.of(
+                    "HIGH", 1,
+                    "MEDIUM", 2,
+                    "NORMAL", 3,
+                    "LOW", 4
+            );
+
+            complaints.sort((c1, c2) -> {
+
+                String p1 = c1.getPriority();
+                String p2 = c2.getPriority();
+
+                int rank1 = p1 == null ? 4 :
+                        priorityRank.getOrDefault(p1.toUpperCase(), 5);
+
+                int rank2 = p2 == null ? 4 :
+                        priorityRank.getOrDefault(p2.toUpperCase(), 5);
+
+                int result = Integer.compare(rank1, rank2);
+
+                if (result != 0) {
+                    return result;
+                }
+
+                return c1.getComplaintId().compareTo(c2.getComplaintId());
+            });
+
             System.out.println("\n===== PRIORITY SORTED REPORT =====");
-    
+
             complaints.forEach(System.out::println);
         }
-    
+
         public void displayStatusReport() {
-    
+
             List<Complaint> complaints =
                     new ArrayList<>(repository.getAllComplaints());
-    
-            complaints.sort(new ComplaintStatusComparator());
-    
+
+            complaints.sort((c1, c2) -> {
+
+                int result = String.CASE_INSENSITIVE_ORDER.compare(
+                        c1.getStatus(),
+                        c2.getStatus()
+                );
+
+                if (result != 0) {
+                    return result;
+                }
+
+                return c1.getComplaintId().compareTo(c2.getComplaintId());
+            });
+
             System.out.println("\n===== STATUS SORTED REPORT =====");
-    
+
             complaints.forEach(System.out::println);
         }
 
